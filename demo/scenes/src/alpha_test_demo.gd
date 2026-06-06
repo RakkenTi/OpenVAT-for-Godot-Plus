@@ -59,5 +59,5 @@ func randomizeInstance(i: int):
 	if randomize_rotation:
 		node3D.rotate_y(randf_range(0, TAU))
 		
-	node3D.position = location
+	node3D.position = location + Vector3(0, 5, 0)
 	vat_multi_mesh_instance_3d.multimesh.set_instance_transform(i, node3D.transform)

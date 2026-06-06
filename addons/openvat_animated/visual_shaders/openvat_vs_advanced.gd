@@ -2,23 +2,23 @@
 # Allows for more advanced visuals while still being VAT-compatible.
 # Instructions:
 # - Inside Vertex mode, create an OpenVatApplier node.
-# - Use the vertex and normal outputs as the basis for the vertex shader.
+# - Use the vertex, normal, tangent, and binormal outputs as the basis for the vertex shader.
 # Now you can also freely apply your own shader logic while still having VAT animations!
 # Albedo textures can still be used like the original shader, just use the Fragment mode like normal.
 # Original Source (credit): https://github.com/antzGames/OpenVAT-for-Godot
 # Fork Source: https://github.com/RakkenTi/OpenVAT-for-Godot-Extended
 @tool
 extends VisualShaderNodeCustom
-class_name VisualShaderNodeOpenVAT
+class_name VisualShaderNodeOpenVATAdvanced
 
 func _get_name() -> String:
-	return "OpenVATApplier"
+	return "AdvancedVATInput"
 
 func _get_category() -> String:
 	return "OpenVAT"
 
 func _get_description() -> String:
-	return "Integrates OpenVAT animation textures natively. All parameter controls are automatically added to the inspector!"
+	return "Input source for OpenVAT properties, including tangent and binormal."
 
 func _get_return_icon_type() -> PortType:
 	return VisualShaderNode.PORT_TYPE_SCALAR
@@ -27,18 +27,22 @@ func _get_input_port_count() -> int:
 	return 0
 
 func _get_output_port_count() -> int:
-	return 2
+	return 4
 
 func _get_output_port_name(port: int) -> String:
 	match port:
 		0: return "vat_vertex"
 		1: return "vat_normal"
+		2: return "vat_tangent"
+		3: return "vat_binormal"
 	return ""
 
 func _get_output_port_type(port: int) -> PortType:
 	match port:
 		0: return PORT_TYPE_VECTOR_3D
 		1: return PORT_TYPE_VECTOR_3D
+		2: return PORT_TYPE_VECTOR_3D
+		3: return PORT_TYPE_VECTOR_3D
 	return PORT_TYPE_VECTOR_3D
 
 func _get_global_code(mode: Shader.Mode) -> String:
@@ -106,6 +110,10 @@ func _get_code(input_vars: Array[String], output_vars: Array[String], mode: Shad
 	vec3 norm_interp = mix(norm_curr, norm_next, blend);
 	vec3 norm_rescaled = 2.0 * norm_interp - 1.0;
 	vec3 norm_b2g = vec3(norm_rescaled.x, norm_rescaled.z, -norm_rescaled.y);
+	vec3 final_norm = normalize(norm_b2g);
 
-	%s = normalize(norm_b2g);
-	""" % [output_vars[0], output_vars[1]]
+	%s = final_norm;
+
+	%s = normalize(vec3(abs(final_norm.y) + abs(final_norm.z), 0.0, -abs(final_norm.x)));
+	%s = normalize(vec3(0.0, abs(final_norm.x) + abs(final_norm.z), -abs(final_norm.y)));
+	""" % [output_vars[0], output_vars[1], output_vars[2], output_vars[3]]
